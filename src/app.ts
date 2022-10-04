@@ -27,7 +27,7 @@ const app = new App({
     signingSecret: process.env.SLACK_SIGNING_SECRET,
     socketMode: true, // enable the following to use socket mode
     appToken: process.env.APP_TOKEN,
-    logLevel: LogLevel.INFO,
+    logLevel: LogLevel.DEBUG,
 });
 
 // Create message handling dispatcher
