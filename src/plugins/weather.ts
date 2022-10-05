@@ -1,8 +1,8 @@
 import {logger} from "../app";
 import {BotMessageEvent, GenericMessageEvent, SayFn} from "@slack/bolt";
 import OpenWeatherMap from '../libs/openweathermap-ts/app';
-import {CountryCode, CurrentResponse} from "../libs/openweathermap-ts/types";
-import {Countries, CountryCodes} from "../libs/openweathermap-ts/helpers/country-codes";
+import {CurrentResponse} from "../libs/openweathermap-ts/types";
+import {CountryCodes} from "../libs/openweathermap-ts/helpers/country-codes";
 
 const openWeather = new OpenWeatherMap({
     apiKey: `${process.env.OPENWEATHERMAP_API_KEY}`
@@ -59,20 +59,20 @@ exports.func = async function (message: GenericMessageEvent | BotMessageEvent, s
                         //Maybe a state
                         re = /^((A[LKZR])|(C[AOT])|(D[EC])|(FL)|(GA)|(HI)|(I[DLNA])|(K[SY])|(LA)|(M[EDAINSOT])|(N[EVHJMYCD])|(O[HKR])|(PA)|(RI)|(S[CD])|(T[NX])|(UT)|(V[TA])|(W[AVIY]))$/;
                         if (re.test(code)){
-                            getByCityName(callback, wxLoc[0], 'US', code);
+                            await getByCityName(callback, wxLoc[0], 'US', code);
                             return;
                         }
 
                         //Maybe a Canadian state?
                         re = /^((AB)|(BC)|(MB)|(N[BLTSU])|(ON)|(PE)|(QC)|(SK)|(YT))$/
                         if (re.test(code)){
-                            getByCityName(callback, wxLoc[0], 'CA', code);
+                            await getByCityName(callback, wxLoc[0], 'CA', code);
                             return;
                         }
 
                         //This may be a country
                         if (code in CountryCodes) {
-                            getByCityName(callback, wxLoc[0], code);
+                            await getByCityName(callback, wxLoc[0], code);
                             return;
                         }
 
@@ -143,9 +143,8 @@ exports.func = async function (message: GenericMessageEvent | BotMessageEvent, s
 
         const correctedUnixTime = (time + offset) * 1000;
         let d = new Date(correctedUnixTime);
-        let res = `${d.getUTCHours().toString().padStart(2, "0")}:${d.getUTCMinutes().toString().padStart(2, "0")} ` +
+        return `${d.getUTCHours().toString().padStart(2, "0")}:${d.getUTCMinutes().toString().padStart(2, "0")} ` +
             `${months[d.getUTCMonth()]}, ${d.getUTCDate()} ${d.getUTCFullYear()}`;
-        return res;
     }
 
     // async function getGEO(location: string) {
