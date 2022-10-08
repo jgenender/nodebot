@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon",
-    "build": "rimraf ./build && tsc && npm run createdb",
+    "build": "rimraf ./build && npm run createdb && tsc",
     "start": "npm run build && node build/app.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "createdbdev": "npx prisma migrate dev --name init",
