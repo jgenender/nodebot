@@ -5,10 +5,11 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon",
-    "build": "rimraf ./build && tsc",
+    "build": "rimraf ./build && tsc && npm run createdb",
     "start": "npm run build && node build/app.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "createdb": "npx prisma migrate dev --name init; npx prisma generate"
+    "createdbdev": "npx prisma migrate dev --name init",
+    "createdb": "npx prisma db push"
   },
   "keywords": [],
   "author": "",

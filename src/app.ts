@@ -1,3 +1,4 @@
+import log4js from "log4js";
 import {App, LogLevel} from '@slack/bolt';
 import { karmaHandler } from './core/karma';
 import {logger} from './util/logger';
@@ -62,7 +63,11 @@ app.message( async ({message, say}) => {
 
 logger.info('Starting Nodebot...');
 (async () => {
-    // Start your app
-    await app.start();
-    logger.info(`Nodebot is running!`);
+    try {
+        // Start your app
+        await app.start();
+        logger.info(`Nodebot is running!`);
+    } finally {
+        log4js.shutdown();
+    }
 })();

@@ -3,8 +3,7 @@
     "fileAppender": {
       "type": "dateFile",
       "filename": "./logs/nodebot.log",
-      "maxLogSize": 10485760,
-      "backups": 7,
+      "numBackups" : 7,
       "compress": true
     },
     "console": {
