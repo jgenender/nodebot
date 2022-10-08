@@ -1,11 +1,8 @@
 import {App, LogLevel} from '@slack/bolt';
-import log4js from "log4js";
-import log4jconfig from './config/log4js.json'
+import { karmaHandler } from './core/karma';
+import {logger} from './util/logger';
 
 require("dotenv").config();
-
-//Inititalize logger
-export const logger = log4js.configure(log4jconfig).getLogger();
 
 //Set up plugins
 interface PluginType {
@@ -30,10 +27,12 @@ const app = new App({
     logLevel: LogLevel.DEBUG,
 });
 
-// Create message handling dispatcher
+// Create message handling dispatchers
+
+//Antyhing that starts with '~'
 app.message('~', async ({message, say}) => {
     if (message.subtype === undefined || message.subtype === 'bot_message') {
-        if (message.text && message.text.startsWith("~")) {
+        if (message.text) {
             const re = /^[^\s]+/;
             const item = message.text.match(re);
             if (item) {
@@ -47,6 +46,16 @@ app.message('~', async ({message, say}) => {
                     say(`I don't know what ${key} is, <@${message.user}>`);
                 }
             }
+        }
+    }
+});
+
+// Core message handler for any message
+app.message( async ({message, say}) => {
+    if (message.subtype === undefined || message.subtype === 'bot_message') {
+        if (message.text) {
+            //test for karma
+            if (await karmaHandler(app.client, message, say)) return;
         }
     }
 });

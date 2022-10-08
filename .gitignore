@@ -8,6 +8,11 @@
 # testing
 /coverage
 
+#db
+/prisma/*.db
+# Normally we should add this to the repo, but there is no need as we can generate it
+/prisma/migrations/
+
 #logs
 /logs
 
@@ -28,3 +33,4 @@ yarn-error.log*
 
 # IDE
 .idea
+/prisma/nodebot.db-journal

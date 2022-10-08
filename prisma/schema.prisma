@@ -1,0 +1,35 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Karma {
+    id          Int         @id @default(autoincrement())
+    user        String      @unique
+    displayName String      @map("display_name")
+    value       Int
+
+    @@index(displayName)
+}
+
+model Factoid {
+    id          Int         @id @default(autoincrement())
+    name        String      @unique
+    user        String
+    value       String
+    updated     DateTime    @default(now())
+    lastUsed    DateTime
+    locked      Boolean
+
+    @@index(user)
+    @@index(value)
+    @@index(updated)
+    @@index(lastUsed)
+}

@@ -1,5 +1,5 @@
 import {BotMessageEvent, GenericMessageEvent, SayFn} from "@slack/bolt";
-import {logger} from "../app";
+import {logger} from "../util/logger";
 
 exports.name = 'hello';
 exports.func = async function(message: GenericMessageEvent | BotMessageEvent, say: SayFn) {
