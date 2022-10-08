@@ -115,13 +115,9 @@ export async function karmaHandler(client: WebClient, message: GenericMessageEve
     async function _updateKarma(user: User, karma: Karma, incOrDec: number) {
         let val;
         if(incOrDec === INCREASE){
-           val = {
-               increment: 1
-           }
+           val = { increment: 1 }
         } else {
-            val = {
-                decrement: 1
-            }
+            val = { decrement: 1 }
         }
         if (user && user.profile) return await prisma.karma.update({
             where: {
