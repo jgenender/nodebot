@@ -73,12 +73,8 @@ export async function karmaHandler(client: WebClient, message: GenericMessageEve
                 karma = await _createKarma(user, 0);
                 if (karma == null) throw new Error(`Could not create Karma for <@${user.id}>`);
             }
-            if (direction === INCREASE)
-                karma.value++;
-            else
-                karma.value--;
 
-            karma = await _updateKarma(user, karma);
+            karma = await _updateKarma(user, karma, direction);
             if (karma == null) throw new Error(`_processKarma returned null`);
 
             if (karmaSize > 2) {
@@ -116,14 +112,24 @@ export async function karmaHandler(client: WebClient, message: GenericMessageEve
         return null;
     }
 
-    async function _updateKarma(user: User, karma: Karma) {
+    async function _updateKarma(user: User, karma: Karma, incOrDec: number) {
+        let val;
+        if(incOrDec === INCREASE){
+           val = {
+               increment: 1
+           }
+        } else {
+            val = {
+                decrement: 1
+            }
+        }
         if (user && user.profile) return await prisma.karma.update({
             where: {
                 user: karma.user
             },
             data: {
                 displayName: user.profile.display_name,
-                value: karma.value
+                value: val
             }
         });
 
