@@ -23,7 +23,7 @@ export async function karmaHandler(client: WebClient, message: GenericMessageEve
             return false;
         }
 
-        const matcher = /^<@(.*?)>\s?.*?(\+{2,}|-{2,})/.exec(message.text);
+        const matcher = /^<@(.*?)>\s?.*?(\+{2,}|-{2,}|\u2014)/.exec(message.text);
         if (matcher == null) return false;
 
         const slackUser: UsersInfoResponse = await client.users.info({
