@@ -1,20 +1,13 @@
 import {logger} from "../util/logger";
 import {prisma} from "../util/db";
-import {WebClient, UsersInfoResponse} from '@slack/web-api';
+import {WebClient} from '@slack/web-api';
+import {User} from '@slack/web-api/dist/response/UsersInfoResponse'
 import {Karma} from ".prisma/client";
 import {BotMessageEvent, GenericMessageEvent, SayFn} from "@slack/bolt";
 
 const INCREASE = 1;
 const DECREASE = -1;
-
-//Hack: Pseudo types declared because we can't seem to import User/Profile from @slack/web-api
-declare type User = {
-    id?: string,
-    profile?: Profile
-}
-declare type Profile = {
-    display_name?: string
-}
+const NORMAL_KARMA_SIZE = 2;
 
 export async function karmaHandler(client: WebClient, message: GenericMessageEvent | BotMessageEvent, say: SayFn) {
     try {
@@ -26,30 +19,26 @@ export async function karmaHandler(client: WebClient, message: GenericMessageEve
         const matcher = /^<@(.*?)>\s?.*?(\+{2,}|-{2,}|\u2014)/.exec(message.text);
         if (matcher == null) return false;
 
-        const slackUser: UsersInfoResponse = await client.users.info({
-            user: matcher[1]
-        });
+        const slackUser = await _getUser( matcher[1] );
 
         if (slackUser) {
-            const user = slackUser.user;
-            if (!user) throw new Error("slackUser.user from UserInfoResponse is undefined");
-
-            const userId = user.id;
-            if (!userId) throw new Error("slackUser.user.id from UserInfoResponse is undefined");
 
             //Don't allow the karma requester to raise their own karma
-            if (userId === message.user) {
-                await say(`No no bro, you can't mess with your own karma.`);
+            if (slackUser.id === message.user) {
+                await say(`No no bro, you can't mess with your own karma. You just lost a karma point ` +
+                    `for trying to game me. Nice going there, slick!`);
+                const messageUser = await _getUser(message.user);
+                await _processKarma(messageUser, DECREASE, NORMAL_KARMA_SIZE);
                 return true;
             }
 
             //Check for karma increase or decrease
             if (matcher[2].startsWith('++')) {
                 //Increase
-                await _processKarma(user, INCREASE, matcher[2].length);
+                await _processKarma(slackUser, INCREASE, matcher[2].length);
             } else {
                 //Decrease
-                await _processKarma(user, DECREASE, matcher[2].length);
+                await _processKarma(slackUser, DECREASE, matcher[2].length);
             }
         } else {
             await say(`I don't know who that is, <@${message.user}>`);
@@ -66,6 +55,22 @@ export async function karmaHandler(client: WebClient, message: GenericMessageEve
         return true;
     }
 
+    async function _getUser(userId: string | undefined): Promise<User> {
+
+        if (!userId) throw new Error("userId passed into _getUser is undefined");
+
+        const _userInfResp =  await client.users.info({
+            user: userId
+        });
+
+        if (!_userInfResp) throw new Error(`_userInfResp from UserInfoResponse is undefined for user ${userId}`);
+
+        if (!_userInfResp.user) throw new Error(`_userInfResp.user from UserInfoResponse is undefined ` +
+            `for user ${userId}`);
+
+        return _userInfResp.user;
+    }
+
     async function _processKarma(user: User, direction: number, karmaSize: number) {
         if (user && user.id) {
             let karma = await _getKarma(user);
@@ -77,10 +82,12 @@ export async function karmaHandler(client: WebClient, message: GenericMessageEve
             karma = await _updateKarma(user, karma, direction);
             if (karma == null) throw new Error(`_processKarma returned null`);
 
-            if (karmaSize > 2) {
-                await say(`Ok there tiger, I will ${direction === INCREASE ? 'bump' : 'remove'} <@${user.id}>'s karma by 1 point. <@${user.id}> has increased karma to ${karma.value}`);
+            if (karmaSize > NORMAL_KARMA_SIZE) {
+                await say(`Ok there tiger, I will ${direction === INCREASE ? 'bump' : 'remove'} ` +
+                    `<@${user.id}>'s karma by 1 point. <@${user.id}> has increased karma to ${karma.value}`);
             } else {
-                await say(`<@${user.id}> has ${direction === INCREASE ? 'increased' : 'decreased'} karma to ${karma.value}`);
+                await say(`<@${user.id}> has ${direction === INCREASE ? 'increased' : 'decreased'} i` +
+                    `karma to ${karma.value}`);
             }
         }
 
@@ -98,7 +105,7 @@ export async function karmaHandler(client: WebClient, message: GenericMessageEve
     }
 
     async function _createKarma(user: User, karmaValue: number) {
-        if (user && user.id && user.profile && user.profile.display_name) {
+        if (user?.id && user?.profile?.display_name) {
             return await prisma.karma.create({
                     data: {
                         user: user.id,
@@ -113,19 +120,14 @@ export async function karmaHandler(client: WebClient, message: GenericMessageEve
     }
 
     async function _updateKarma(user: User, karma: Karma, incOrDec: number) {
-        let val;
-        if(incOrDec === INCREASE){
-           val = { increment: 1 }
-        } else {
-            val = { decrement: 1 }
-        }
-        if (user && user.profile) return await prisma.karma.update({
+
+        if (user?.profile) return await prisma.karma.update({
             where: {
                 user: karma.user
             },
             data: {
                 displayName: user.profile.display_name,
-                value: val
+                value: (incOrDec === INCREASE) ? { increment: 1 } : { decrement: 1 }
             }
         });
 
