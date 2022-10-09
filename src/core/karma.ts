@@ -25,8 +25,13 @@ export async function karmaHandler(client: WebClient, message: GenericMessageEve
 
             //Don't allow the karma requester to raise their own karma
             if (slackUser.id === message.user) {
-                await say(`No no bro, you can't mess with your own karma. You just lost a karma point ` +
-                    `for trying to game me. Nice going there, slick!`);
+                if (matcher[2].startsWith('++')) {
+                    await say(`No no bro, you can't mess with your own karma. You just lost a karma point ` +
+                        `for trying to game me. Nice going there, slick!`);
+                } else {
+                   await say('Normally, I would not allow you to play with your own karma, but if you are ' +
+                       'that intelligent to lower your own karma, heck, why not?');
+                }
                 const messageUser = await _getUser(message.user);
                 await _processKarma(messageUser, DECREASE, NORMAL_KARMA_SIZE);
                 return true;
@@ -75,18 +80,18 @@ export async function karmaHandler(client: WebClient, message: GenericMessageEve
         if (user && user.id) {
             let karma = await _getKarma(user);
             if (karma == null) {
-                karma = await _createKarma(user, 0);
+                karma = await _createKarma(user, direction);
                 if (karma == null) throw new Error(`Could not create Karma for <@${user.id}>`);
+            } else {
+                karma = await _updateKarma(user, karma, direction);
+                if (karma == null) throw new Error(`_updateKarma returned null for <@${user.id}>`);
             }
-
-            karma = await _updateKarma(user, karma, direction);
-            if (karma == null) throw new Error(`_processKarma returned null`);
 
             if (karmaSize > NORMAL_KARMA_SIZE) {
                 await say(`Ok there tiger, I will ${direction === INCREASE ? 'bump' : 'remove'} ` +
                     `<@${user.id}>'s karma by 1 point. <@${user.id}> has increased karma to ${karma.value}`);
             } else {
-                await say(`<@${user.id}> has ${direction === INCREASE ? 'increased' : 'decreased'} i` +
+                await say(`<@${user.id}> has ${direction === INCREASE ? 'increased' : 'decreased'} ` +
                     `karma to ${karma.value}`);
             }
         }
